@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 import sys
 import winsound
-import threading
+import os
 import time
+import threading
+from pynput import keyboard
 from modules.virtual_chip8 import Virtual_chip8
-from PyQt5.QtWidgets import QApplication
-from PyQt5 import QtCore
-from modules.gui import Gui
-
 
 wait_to_key_command = ('f', '0a')
+vc8 = Virtual_chip8()
 threads = []
+
+
+def on_press(key):
+    key = str(key)
+    vc8.pressed_key = key
 
 
 def main():
@@ -37,9 +41,9 @@ def parse_args(args):
         elif args[i].lower() == 'm':
             memory = True
         elif args[i].lower() == 'h':
-            print('if you want debug then:\n\
-                   print "d" for main info\n\
-                   print "r" for registers info\n\
+            print('if you want debug then:\
+                   print "d" for main info\
+                   print "r" for registers info\
                    print "m" for memory info')
             sys.exit()
         else:
@@ -49,48 +53,45 @@ def parse_args(args):
 
 
 def start(file, debug, registers, memory):
-    vc8 = Virtual_chip8()
-    app = QApplication([])
-    gui = Gui(vc8)
-    sys.exit(app.exec_())
-    load_memory(file, vc8)
+    load_memory(file)
 
-    thread_print = threading.Thread(target=print_field,
-                                    args=(gui, app))
     thread_execute = threading.Thread(target=execute,
-                                      args=(vc8, debug, registers, memory))
+                                      args=(debug, registers, memory))
+    thread_print = threading.Thread(target=print_field)
+    listener = keyboard.Listener(on_press=on_press)
 
     thread_execute.start()
     thread_print.start()
+    listener.start()
 
     threads.append(thread_execute)
     threads.append(thread_print)
+    threads.append(listener)
     return
 
 
-def execute(vc8, debug, registers, memory):
+def execute(debug, registers, memory):
     prev_pc = vc8.pc
     while vc8.pc < vc8.memory_limit:
-        command = get_command(vc8)
-        treat_tick(vc8, debug, registers, memory, command)
+        command = get_command()
         key_command = (command[0], command[2:])
         while (key_command == wait_to_key_command and
                 vc8.pressed_key not in vc8.keys):
-            time.sleep(0.5)
+            time.sleep(1)
+        treat_tick(debug, registers, memory, command)
         vc8.compare_and_execute(command)
         if vc8.pc == prev_pc:
-            time.sleep(5)
+            time.sleep(2)
             print('GAME OVER!')
             for thread in threads:
                 sys.exit(thread)
         else:
             prev_pc = vc8.pc
         time.sleep(1 / vc8.speed)
-        gui.print_field()
     return
 
 
-def load_memory(file, vc8):
+def load_memory(file):
     counter = 0
     temp_num = ''
     for line in file.readlines():
@@ -103,21 +104,21 @@ def load_memory(file, vc8):
     return
 
 
-def get_command(vc8):
+def get_command():
     command = vc8.memory[vc8.pc] + vc8.memory[vc8.pc + 1]
     command = command.replace('0x', '')
     command = '0x' + command
     return command
 
 
-def treat_tick(vc8, debug, registers, memory, command):
+def treat_tick(debug, registers, memory, command):
     if vc8.sound_timer > 0:
         winsound.Beep(1000, 100)
         vc8.sound_timer -= 1
     if vc8.delay_timer > 0:
         vc8.delay_timer -= 1
     if debug:
-        print("PC: {0}, I: {1}, delay: {2}, sound: {3} command: {4}"
+        print("PC: {0}, I: {1}, delay: {2}, sound: {3} command: {4}"\
               .format(vc8.pc, vc8.i, vc8.delay_timer, vc8.sound_timer,
                       command))
     if registers:
@@ -127,9 +128,20 @@ def treat_tick(vc8, debug, registers, memory, command):
     return
 
 
-def print_field(gui, app):
-    gui.print_field()
-    QtCore.QCoreApplication.processEvents()
+def print_field():
+    try:
+        os.system('cls')
+    except:
+        os.system('clear')
+    representation = ''
+    for y in range(vc8.height):
+        for x in range(vc8.width):
+            representation += ' ' + vc8.field[x][y]
+            representation = representation.replace('0b', '')
+            representation = representation.replace('0', '.')
+            representation = representation.replace('1', '#')
+        print(representation)
+        representation = ''
     return
 
 if __name__ == "__main__":
