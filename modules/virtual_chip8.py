@@ -7,6 +7,7 @@ import random
 class Virtual_chip8:
     def __init__(self):
         # First 512 bytes - reserved by chip8, so first command location is 512
+        self.execution = True
         self.speed = 60
         self.memory_limit = 4096
         self.shift = 512
@@ -81,12 +82,12 @@ class Virtual_chip8:
                      'a': '0x07', 'ф': '0x07',
                      's': '0x08', 'ы': '0x08',
                      'd': '0x09', 'в': '0x09',
-                     'z': '0x0a',  'я': '0x0a',
-                     'c': '0x0b',  'с': '0x0b',
+                     'z': '0x0a', 'я': '0x0a',
+                     'c': '0x0b', 'с': '0x0b',
                      '4': '0x0c',
-                     'r': '0x0d',  'к': '0x0d',
-                     'f': '0x0e',  'а': '0x0e',
-                     'v': '0x0f',  'м': '0x0f'}
+                     'r': '0x0d', 'к': '0x0d',
+                     'f': '0x0e', 'а': '0x0e',
+                     'v': '0x0f', 'м': '0x0f'}
         self._init_memory()
         self._init_registers()
         self._init_field_()

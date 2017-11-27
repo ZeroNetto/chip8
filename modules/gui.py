@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QLabel
-from PyQt5 import QtCore
+from PyQt5.QtCore import QBasicTimer
 from modules import virtual_chip8
 
 
@@ -16,6 +16,12 @@ class Gui(QWidget):
         self.setFixedSize(self.sell_size * self.vc8.width,
                           self.sell_size * self.vc8.height)
         self.show()
+        self.timer = QBasicTimer()
+        self.timer.start(2000 / self.vc8.speed, self)
+
+    def timerEvent(self, event):
+        self.print_field()
+        return
 
     def _init_field(self):
         field = QGridLayout()
@@ -42,7 +48,9 @@ class Gui(QWidget):
 
     def keyPressEvent(self, e):
         try:
-            self.vc8.pressed_key = chr(e.key()).lower()
+            char = chr(e.key()).lower()
+            if char in self.vc8.keys:
+                self.vc8.pressed_key = char
         except:
             return
         return
