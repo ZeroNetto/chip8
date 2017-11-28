@@ -387,9 +387,9 @@ class CommandsTest(unittest.TestCase):
         vc8.i = 516
         exp_result = ('0x02', '0x01')
         vc8.compare_and_execute(command)
-        self.assertEqual(vc8.memory[vc8.i], exp_result[0])
-        self.assertEqual(vc8.memory[vc8.i + 1], exp_result[1])
-        self.assertEqual(vc8.memory[vc8.i + 2], '0x00')
+        self.assertEqual(vc8.memory[vc8.i], '0x00')
+        self.assertEqual(vc8.memory[vc8.i + 1], exp_result[0])
+        self.assertEqual(vc8.memory[vc8.i + 2], exp_result[1])
         self.assertEqual(vc8.pc, 514)
         return
 

@@ -484,17 +484,11 @@ class Virtual_chip8:
     def ld_B_VX(self, command):
         # Save the value of register VX in 2-10 presentation (BCD) in adress I, I+1, I+2
         num = str(int(self.registers[int(command[3], 16)], 16))
-        bcd = []
-        for digit in num:
-            temp = hex(int(digit))
-            if len(temp) < 4:
-                temp = '0x0' + temp[len(temp) - 1]
-            bcd.append(temp)
-        for x in range(3):
-            if len(bcd) <= x:
-                self.memory[self.i + x] = '0x00'
-            else:
-                self.memory[self.i + x] = bcd[x]
+        while len(num) < 3:
+            num = '0' + num
+        for digit_id in range(len(num)):
+            temp = '0x0' + num[digit_id]
+            self.memory[self.i + digit_id] = temp
         self.pc += 2
         return
 

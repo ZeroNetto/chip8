@@ -22,8 +22,8 @@ def main():
                 write at least the name of the game')
         sys.exit()
     name = sys.argv[1]
-    debug, registers, memory = parse_args(sys.argv)
-    start(name, debug, registers, memory)
+    debug, registers, memory, without_delay = parse_args(sys.argv)
+    start(name, debug, registers, memory, without_delay)
     return
 
 
@@ -31,6 +31,7 @@ def parse_args(args):
     debug = False
     registers = False
     memory = False
+    without_delay = False
     for i in range(2, len(args)):
         if args[i].lower() == 'd':
             debug = True
@@ -38,24 +39,28 @@ def parse_args(args):
             registers = True
         elif args[i].lower() == 'm':
             memory = True
-        elif args[i].lower() == 'h':
-            print('if you want debug then:\
-                   print "d" for main info\
-                   print "r" for registers info\
-                   print "m" for memory info')
+        elif args[i].lower() == 'wd':
+            without_delay = True
+        elif args[i].lower() == 'h' or args[i].lower() == '--h':
+            print('if you want debug then:\n\
+                   print "d" for main info\n\
+                   print "r" for registers info\n\
+                   print "m" for memory info\n\
+                   print "wd" for start without delay')
             sys.exit()
         else:
             print('There are no such key: {0}'.format(args[i].lower()))
             sys.exit()
-    return (debug, registers, memory)
+    return (debug, registers, memory, without_delay)
 
 
-def start(name, debug, registers, memory):
+def start(name, debug, registers, memory, without_delay):
     with open('{0}'.format(name), 'rb') as file:
         load_memory(file)
 
     thread_execute = threading.Thread(target=execute,
-                                      args=(debug, registers, memory))
+                                      args=(debug, registers, memory,
+                                            without_delay))
     thread_timers = threading.Thread(target=tick_timers)
     listener = keyboard.Listener(on_press=on_press)
 
@@ -67,14 +72,12 @@ def start(name, debug, registers, memory):
     return
 
 
-def execute(debug, registers, memory):
-    wait_to_key_command = ('0xf', '0a')
-    drw_command = 'd'
+def execute(debug, registers, memory, without_delay):
+    wait_to_key_command = ('f', '0a')
     prev_pc = vc8.pc
     while vc8.pc < vc8.memory_limit and vc8.execution:
         command = get_command()
-        key_command = (command[:3], command[4:])
-        while (key_command == wait_to_key_command and
+        while ((command[2], command[4:]) == wait_to_key_command and
                 vc8.pressed_key not in vc8.keys):
             time.sleep(1)
         tracing(debug, registers, memory, command)
@@ -86,8 +89,10 @@ def execute(debug, registers, memory):
             sys.exit()
         else:
             prev_pc = vc8.pc
-        #if command[2] == drw_command:
-        time.sleep(0.1 / vc8.speed)
+        if not without_delay:
+            time.sleep(0.1 / vc8.speed)
+        if command[2] == 'd':
+            time.sleep(0.01 / vc8.speed)
     sys.exit()
     return
 
