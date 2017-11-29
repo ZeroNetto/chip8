@@ -48,7 +48,7 @@ def parse_args(args):
 
 def start(name, debug, registers, memory, without_delay):
     vc8 = Virtual_chip8()
-    with open('{0}'.format(name), 'rb') as file:
+    with open('games_for_chip8\{0}'.format(name), 'rb') as file:
         load_memory(file, vc8)
     app = QApplication(sys.argv)
     gui = Gui(vc8)

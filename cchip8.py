@@ -69,7 +69,7 @@ def parse_args(args):
 
 
 def start(name, debug, registers, memory, without_delay):
-    with open('{0}'.format(name), 'rb') as file:
+    with open('games_for_chip8\{0}'.format(name), 'rb') as file:
         load_memory(file)
 
     thread_execute = threading.Thread(target=execute,
