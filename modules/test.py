@@ -305,7 +305,7 @@ class CommandsTest(unittest.TestCase):
         command = '0xe19e'
         vc8 = virtual_chip8.Virtual_chip8()
         vc8.registers[1] = '0x0e'
-        vc8.pressed_key = 'f'
+        vc8.pressed_keys['0x0e'] = True
         vc8.compare_and_execute(command)
         self.assertEqual(vc8.pc, 516)
         return
@@ -314,7 +314,7 @@ class CommandsTest(unittest.TestCase):
         command = '0xe1a1'
         vc8 = virtual_chip8.Virtual_chip8()
         vc8.registers[1] = '0x0e'
-        vc8.pressed_key = 'f'
+        vc8.pressed_keys['0x0e'] = True
         vc8.compare_and_execute(command)
         self.assertEqual(vc8.pc, 514)
         return
@@ -332,8 +332,8 @@ class CommandsTest(unittest.TestCase):
     def test_ld_VX_K(self):
         command = '0xf10a'
         vc8 = virtual_chip8.Virtual_chip8()
-        vc8.pressed_key = 'f'
-        exp_result = '0x0e'
+        vc8.pressed_keys['0x0f'] = True
+        exp_result = '0x0f'
         vc8.compare_and_execute(command)
         self.assertEqual(vc8.registers[1], exp_result)
         self.assertEqual(vc8.pc, 514)
