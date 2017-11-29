@@ -21,7 +21,6 @@ class Virtual_chip8:
         self.stack = []
         self.delay_timer = 0
         self.sound_timer = 0
-        self.pressed_key = ''
         self.basic_commands = {'0x00e0': self.clean_screen,
                                '0x00ee': self.ret}
         self.first_num_commands = {'0x1': self.jp_NNN,
@@ -88,6 +87,22 @@ class Virtual_chip8:
                      'r': '0x0d', 'к': '0x0d',
                      'f': '0x0e', 'а': '0x0e',
                      'v': '0x0f', 'м': '0x0f'}
+        self.pressed_keys = {'0x00': False,
+                             '0x01': False,
+                             '0x02': False,
+                             '0x03': False,
+                             '0x04': False,
+                             '0x05': False,
+                             '0x06': False,
+                             '0x07': False,
+                             '0x08': False,
+                             '0x09': False,
+                             '0x0a': False,
+                             '0x0b': False,
+                             '0x0c': False,
+                             '0x0d': False,
+                             '0x0e': False,
+                             '0x0f': False}
         self._init_memory()
         self._init_registers()
         self._init_field_()
@@ -414,23 +429,19 @@ class Virtual_chip8:
     def skp_VX(self, command):
         # Skip the next instruction, if key, which adress saves in register VX is push.
         reg_num = self.registers[int(command[3], 16)]
-        if (self.pressed_key in self.keys and
-                self.keys[self.pressed_key] == reg_num):
+        if self.pressed_keys[reg_num]:
             self.pc += 4
         else:
             self.pc += 2
-        self.pressed_key = ''
         return
 
     def sknp_VX(self, command):
         # Skip the next instruction, if key, which adress saves in register VX isn't push.
         reg_num = self.registers[int(command[3], 16)]
-        if (self.pressed_key not in self.keys or
-                self.keys[self.pressed_key] != reg_num):
+        if not self.pressed_keys[reg_num]:
             self.pc += 4
         else:
             self.pc += 2
-        self.pressed_key = ''
         return
 
     def ld_VX_DT(self, command):
@@ -447,9 +458,11 @@ class Virtual_chip8:
         # Waiting for push a key. When key will be push, save it number in
         # register VX and move to next instruction.
         reg = int(command[3], 16)
-        self.registers[reg] = self.keys[self.pressed_key]
-        self.pc += 2
-        self.pressed_key = ''
+        for key in self.pressed_keys:
+            if self.pressed_keys[key]:
+                    self.registers[reg] = key
+                    self.pc += 2
+                    return
         return
 
     def ld_DT_VX(self, command):

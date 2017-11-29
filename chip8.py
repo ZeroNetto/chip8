@@ -71,9 +71,14 @@ def execute(vc8, debug, registers, memory, without_delay):
     while vc8.pc < vc8.memory_limit and vc8.execution:
         command = get_command(vc8)
         tracing(vc8, debug, registers, memory, command)
+        have_pressed_key = False
         while ((command[2], command[4:]) == wait_to_key_command and
-                vc8.pressed_key not in vc8.keys):
-            time.sleep(0.5)
+                not have_pressed_key):
+            time.sleep(0.1)
+            for key in vc8.pressed_keys:
+                if vc8.pressed_keys[key]:
+                    have_pressed_key = True
+                    break
         vc8.compare_and_execute(command)
         if vc8.pc == prev_pc:
             vc8.execution = False
@@ -83,7 +88,9 @@ def execute(vc8, debug, registers, memory, without_delay):
         else:
             prev_pc = vc8.pc
         if not without_delay:
-            time.sleep(0.1 / vc8.speed)
+            time.sleep(0.01 / vc8.speed)
+        if command[2] == 'd':
+            time.sleep(0.01 / vc8.speed)
     sys.exit()
     return
 

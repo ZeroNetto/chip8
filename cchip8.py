@@ -11,8 +11,22 @@ vc8 = Virtual_chip8()
 
 
 def on_press(key):
-    if key.char in vc8.keys:
-        vc8.pressed_key = key.char
+    try:
+        char = key.char
+        if char in vc8.keys:
+            vc8.pressed_keys[vc8.keys[char]] = True
+    except:
+        return
+    return
+
+
+def on_release(key):
+    try:
+        char = key.char
+        if char in vc8.keys:
+            vc8.pressed_keys[vc8.keys[char]] = False
+    except:
+        return
     return
 
 
@@ -62,9 +76,11 @@ def start(name, debug, registers, memory, without_delay):
                                       args=(debug, registers, memory,
                                             without_delay))
     thread_timers = threading.Thread(target=tick_timers)
-    listener = keyboard.Listener(on_press=on_press)
+    listener = keyboard.Listener(on_press=on_press,
+                                 on_release=on_release)
 
     listener.start()
+    thread_timers.start()
     thread_execute.start()
     if not debug and not memory and not registers:
         thread_print = threading.Thread(target=print_field)
@@ -77,9 +93,14 @@ def execute(debug, registers, memory, without_delay):
     prev_pc = vc8.pc
     while vc8.pc < vc8.memory_limit and vc8.execution:
         command = get_command()
+        have_pressed_key = False
         while ((command[2], command[4:]) == wait_to_key_command and
-                vc8.pressed_key not in vc8.keys):
-            time.sleep(1)
+                not have_pressed_key):
+            time.sleep(0.1)
+            for key in vc8.pressed_keys:
+                if vc8.pressed_keys[key]:
+                    have_pressed_key = True
+                    break
         tracing(debug, registers, memory, command)
         vc8.compare_and_execute(command)
         if vc8.pc == prev_pc:
@@ -151,7 +172,7 @@ def print_field():
             os.system('clear')
         for y in range(vc8.height):
             print(get_representation_of_line(y))
-        time.sleep(1 / vc8.speed)
+        time.sleep(3 / vc8.speed)
     sys.exit()
     return
 

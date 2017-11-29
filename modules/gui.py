@@ -51,7 +51,16 @@ class Gui(QWidget):
         try:
             char = chr(e.key()).lower()
             if char in self.vc8.keys:
-                self.vc8.pressed_key = char
+                self.vc8.pressed_keys[self.vc8.keys[char]] = True
+        except:
+            return
+        return
+
+    def keyReleaseEvent(self, e):
+        try:
+            char = chr(e.key()).lower()
+            if char in self.vc8.keys:
+                self.vc8.pressed_keys[self.vc8.keys[char]] = False
         except:
             return
         return
