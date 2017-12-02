@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 import sys
-import winsound
+import pyaudio
+import wave
 import threading
 import time
 from modules.virtual_chip8 import Virtual_chip8
 from PyQt5.QtWidgets import QApplication
 from modules.gui import Gui
+
+wf = wave.open('sound\\beep.wav', 'rb')
+pa = pyaudio.PyAudio()
+stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
+                 channels=wf.getnchannels(),
+                 rate=wf.getframerate(),
+                 output=True)
+data = wf.readframes(1024)
 
 
 def main():
@@ -87,9 +96,7 @@ def execute(vc8, debug, registers, memory, without_delay):
             sys.exit()
         else:
             prev_pc = vc8.pc
-        if not without_delay:
-            time.sleep(0.01 / vc8.speed)
-        if command[2] == 'd':
+        if not without_delay or command[2] == 'd':
             time.sleep(0.01 / vc8.speed)
     sys.exit()
     return
@@ -130,11 +137,14 @@ def tracing(vc8, debug, registers, memory, command):
 def tick_timers(vc8):
     while vc8.execution:
         if vc8.sound_timer > 0:
-            winsound.Beep(1000, 100)
+            stream.write(data)
             vc8.sound_timer -= 1
         if vc8.delay_timer > 0:
             vc8.delay_timer -= 1
         time.sleep(1 / vc8.speed)
+    stream.stop_stream()
+    stream.close()
+    pa.terminate()
     sys.exit()
     return
 

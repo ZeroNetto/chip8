@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 import sys
-import winsound
 import os
+import pyaudio
+import wave
 import time
 import threading
 from pynput import keyboard
 from modules.virtual_chip8 import Virtual_chip8
 
 vc8 = Virtual_chip8()
+wf = wave.open('sound\\beep.wav', 'rb')
+pa = pyaudio.PyAudio()
+stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
+                 channels=wf.getnchannels(),
+                 rate=wf.getframerate(),
+                 output=True)
+data = wf.readframes(1024)
 
 
 def on_press(key):
@@ -155,7 +163,7 @@ def tracing(debug, registers, memory, command):
 def tick_timers():
     while vc8.execution:
         if vc8.sound_timer > 0:
-            winsound.Beep(1000, 100)
+            stream.write(data)
             vc8.sound_timer -= 1
         if vc8.delay_timer > 0:
             vc8.delay_timer -= 1

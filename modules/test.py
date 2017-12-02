@@ -3,7 +3,7 @@ import sys
 import os
 import unittest
 
-import virtual_chip8
+from modules import virtual_chip8
 
 
 class CommandsTest(unittest.TestCase):
