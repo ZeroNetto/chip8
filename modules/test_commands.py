@@ -2,11 +2,12 @@
 import sys
 import os
 import unittest
+import pytest
 
 from modules import virtual_chip8
 
 
-class CommandsTest(unittest.TestCase):
+class Test_commands(unittest.TestCase):
     def test_no_such_command(self):
         command = '0x0000'
         vc8 = virtual_chip8.Virtual_chip8()

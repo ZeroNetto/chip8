@@ -4,11 +4,18 @@ import pyaudio
 import wave
 import threading
 import time
+from sys import platform
 from modules.virtual_chip8 import Virtual_chip8
 from PyQt5.QtWidgets import QApplication
 from modules.gui import Gui
 
-wf = wave.open('sound\\beep.wav', 'rb')
+delimeter = '\\\\'
+if platform == "linux" or platform == "linux2":
+    delimeter = '/'
+elif platform == "darwin":
+    delimeter = ':'
+
+wf = wave.open('sound{0}beep.wav'.format(delimeter), 'rb')
 pa = pyaudio.PyAudio()
 stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
                  channels=wf.getnchannels(),
@@ -43,7 +50,8 @@ def parse_args(args):
         elif args[i].lower() == 'wd':
             without_delay = True
         elif args[i].lower() == 'h' or args[i].lower() == '--h':
-            print('if you want debug then:\n\
+            print('For start you should enter the name of game\n\
+                   if you want debug then:\n\
                    print "d" for main info\n\
                    print "r" for registers info\n\
                    print "m" for memory info\n\
@@ -57,7 +65,7 @@ def parse_args(args):
 
 def start(name, debug, registers, memory, without_delay):
     vc8 = Virtual_chip8()
-    with open('games_for_chip8\{0}'.format(name), 'rb') as file:
+    with open('games_for_chip8{0}{1}'.format(delimeter, name), 'rb') as file:
         load_memory(file, vc8)
     app = QApplication(sys.argv)
     gui = Gui(vc8)

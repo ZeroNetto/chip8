@@ -5,17 +5,24 @@ import pyaudio
 import wave
 import time
 import threading
+from sys import platform
 from pynput import keyboard
 from modules.virtual_chip8 import Virtual_chip8
 
-vc8 = Virtual_chip8()
-wf = wave.open('sound\\beep.wav', 'rb')
+delimeter = '\\\\'
+if platform == "linux" or platform == "linux2":
+    delimeter = '/'
+elif platform == "darwin":
+    delimeter = ':'
+
+wf = wave.open('sound{0}beep.wav'.format(delimeter), 'rb')
 pa = pyaudio.PyAudio()
 stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
                  channels=wf.getnchannels(),
                  rate=wf.getframerate(),
                  output=True)
 data = wf.readframes(1024)
+vc8 = Virtual_chip8()
 
 
 def on_press(key):
@@ -64,7 +71,8 @@ def parse_args(args):
         elif args[i].lower() == 'wd':
             without_delay = True
         elif args[i].lower() == 'h' or args[i].lower() == '--h':
-            print('if you want debug then:\n\
+            print('For start you should enter the name of game\n\
+                   if you want debug then:\n\
                    print "d" for main info\n\
                    print "r" for registers info\n\
                    print "m" for memory info\n\
@@ -77,7 +85,7 @@ def parse_args(args):
 
 
 def start(name, debug, registers, memory, without_delay):
-    with open('games_for_chip8\{0}'.format(name), 'rb') as file:
+    with open('games_for_chip8{0}{1}'.format(delimeter, name), 'rb') as file:
         load_memory(file)
 
     thread_execute = threading.Thread(target=execute,
