@@ -9,13 +9,7 @@ from sys import platform
 from pynput import keyboard
 from modules.virtual_chip8 import Virtual_chip8
 
-delimeter = '\\\\'
-if platform == "linux" or platform == "linux2":
-    delimeter = '/'
-elif platform == "darwin":
-    delimeter = ':'
-
-wf = wave.open('sound{0}beep.wav'.format(delimeter), 'rb')
+wf = wave.open(os.path.join('sound\\beep.wav'), 'rb')
 pa = pyaudio.PyAudio()
 stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
                  channels=wf.getnchannels(),
@@ -48,11 +42,11 @@ def on_release(key):
 def main():
     if len(sys.argv) < 2:
         print('There are no arguments for start\
-                write at least the name of the game')
+                write at least the path to the game')
         sys.exit()
-    name = sys.argv[1]
+    path = sys.argv[1]
     debug, registers, memory, without_delay = parse_args(sys.argv)
-    start(name, debug, registers, memory, without_delay)
+    start(path, debug, registers, memory, without_delay)
     return
 
 
@@ -71,7 +65,7 @@ def parse_args(args):
         elif args[i].lower() == 'wd':
             without_delay = True
         elif args[i].lower() == 'h' or args[i].lower() == '--h':
-            print('For start you should enter the name of game\n\
+            print('For start you should enter the path to the of game\n\
                    if you want debug then:\n\
                    print "d" for main info\n\
                    print "r" for registers info\n\
@@ -84,8 +78,8 @@ def parse_args(args):
     return (debug, registers, memory, without_delay)
 
 
-def start(name, debug, registers, memory, without_delay):
-    with open('games_for_chip8{0}{1}'.format(delimeter, name), 'rb') as file:
+def start(path, debug, registers, memory, without_delay):
+    with open(os.path.join(path), 'rb') as file:
         load_memory(file)
 
     thread_execute = threading.Thread(target=execute,
@@ -120,15 +114,13 @@ def execute(debug, registers, memory, without_delay):
         tracing(debug, registers, memory, command)
         vc8.compare_and_execute(command)
         if vc8.pc == prev_pc:
-            vc8.execution = False
-            time.sleep(2)
             print('GAME OVER!')
+            time.sleep(2)
+            vc8.execution = False
             sys.exit()
         else:
             prev_pc = vc8.pc
         if not without_delay:
-            time.sleep(0.1 / vc8.speed)
-        if command[2] == 'd':
             time.sleep(0.01 / vc8.speed)
     sys.exit()
     return
@@ -188,7 +180,7 @@ def print_field():
             os.system('clear')
         for y in range(vc8.height):
             print(get_representation_of_line(y))
-        time.sleep(3 / vc8.speed)
+        time.sleep(2 / vc8.speed)
     sys.exit()
     return
 

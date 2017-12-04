@@ -21,7 +21,10 @@ class Gui(QWidget):
         self.timer.start(2000 / self.vc8.speed, self)
 
     def timerEvent(self, event):
-        self.print_field()
+        if self.vc8.execution:
+            self.print_field()
+        else:
+            sys.exit()
         return
 
     def _init_field(self):

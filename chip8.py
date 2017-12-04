@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import os
 import pyaudio
 import wave
 import threading
@@ -9,13 +10,8 @@ from modules.virtual_chip8 import Virtual_chip8
 from PyQt5.QtWidgets import QApplication
 from modules.gui import Gui
 
-delimeter = '\\\\'
-if platform == "linux" or platform == "linux2":
-    delimeter = '/'
-elif platform == "darwin":
-    delimeter = ':'
 
-wf = wave.open('sound{0}beep.wav'.format(delimeter), 'rb')
+wf = wave.open(os.path.join('sound\\beep.wav'), 'rb')
 pa = pyaudio.PyAudio()
 stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
                  channels=wf.getnchannels(),
@@ -27,11 +23,11 @@ data = wf.readframes(1024)
 def main():
     if len(sys.argv) < 2:
         print('There are no arguments for start\
-                write at least the name of the game')
+                write at least the path to the game')
         sys.exit()
-    name = sys.argv[1]
+    path = sys.argv[1]
     debug, registers, memory, without_delay = parse_args(sys.argv)
-    start(name, debug, registers, memory, without_delay)
+    start(path, debug, registers, memory, without_delay)
     return
 
 
@@ -49,8 +45,8 @@ def parse_args(args):
             memory = True
         elif args[i].lower() == 'wd':
             without_delay = True
-        elif args[i].lower() == 'h' or args[i].lower() == '--h':
-            print('For start you should enter the name of game\n\
+        elif args[i].lower() == 'h' or args[i].lower() == '--help':
+            print('For start you should enter the path to the game\n\
                    if you want debug then:\n\
                    print "d" for main info\n\
                    print "r" for registers info\n\
@@ -63,9 +59,9 @@ def parse_args(args):
     return (debug, registers, memory, without_delay)
 
 
-def start(name, debug, registers, memory, without_delay):
+def start(path, debug, registers, memory, without_delay):
     vc8 = Virtual_chip8()
-    with open('games_for_chip8{0}{1}'.format(delimeter, name), 'rb') as file:
+    with open(os.path.join(path), 'rb') as file:
         load_memory(file, vc8)
     app = QApplication(sys.argv)
     gui = Gui(vc8)
@@ -91,20 +87,20 @@ def execute(vc8, debug, registers, memory, without_delay):
         have_pressed_key = False
         while ((command[2], command[4:]) == wait_to_key_command and
                 not have_pressed_key):
-            time.sleep(0.1)
+            time.sleep(1 / vc8.speed)
             for key in vc8.pressed_keys:
                 if vc8.pressed_keys[key]:
                     have_pressed_key = True
                     break
         vc8.compare_and_execute(command)
         if vc8.pc == prev_pc:
-            vc8.execution = False
-            time.sleep(5)
             print('GAME OVER!')
+            time.sleep(5)
+            vc8.execution = False
             sys.exit()
         else:
             prev_pc = vc8.pc
-        if not without_delay or command[2] == 'd':
+        if not without_delay:
             time.sleep(0.01 / vc8.speed)
     sys.exit()
     return

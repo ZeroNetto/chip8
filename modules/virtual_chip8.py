@@ -2,6 +2,8 @@
 import sys
 import time
 import random
+import threading
+lock = threading.Lock()
 
 
 class Virtual_chip8:
@@ -9,18 +11,18 @@ class Virtual_chip8:
         # First 512 bytes - reserved by chip8, so first command location is 512
         self.execution = True
         self.speed = 60
-        self.memory_limit = 4096
-        self.shift = 512
-        self.width = 64
-        self.height = 32
-        self.pc = 512
-        self.i = 0
         self.field = []
-        self.memory = []
-        self.registers = []
-        self.stack = []
         self.delay_timer = 0
         self.sound_timer = 0
+        self.registers = []
+        self.i = 0
+        self.memory = []
+        self.pc = 512
+        self.height = 32
+        self.width = 64
+        self.shift = 512
+        self.memory_limit = 4096
+        self.stack = []
         self.basic_commands = {'0x00e0': self.clean_screen,
                                '0x00ee': self.ret}
         self.first_num_commands = {'0x1': self.jp_NNN,
