@@ -57,11 +57,25 @@ class Test_commands(unittest.TestCase):
         self.assertEqual(vc8.pc, 516)
         return
 
+    def test_se_VX_KK_not_equals(self):
+        command = '0x3101'
+        vc8 = virtual_chip8.Virtual_chip8()
+        vc8.compare_and_execute(command)
+        self.assertEqual(vc8.pc, 514)
+        return
+
     def test_sne_VX_KK(self):
         command = '0x4100'
         vc8 = virtual_chip8.Virtual_chip8()
         vc8.compare_and_execute(command)
         self.assertEqual(vc8.pc, 514)
+        return
+
+    def test_sne_VX_KK_not_equals(self):
+        command = '0x4101'
+        vc8 = virtual_chip8.Virtual_chip8()
+        vc8.compare_and_execute(command)
+        self.assertEqual(vc8.pc, 516)
         return
 
     def test_ld_VX_KK(self):
@@ -116,6 +130,7 @@ class Test_commands(unittest.TestCase):
         vc8.compare_and_execute(command)
         self.assertEqual(vc8.pc, 514)
         self.assertEqual(vc8.field[7][0], '1')
+        self.assertEqual(vc8.registers[15], '0x00')
         return
 
     def test_drw_VX_VY_N_with_overflow(self):
@@ -137,11 +152,27 @@ class Test_commands(unittest.TestCase):
         self.assertEqual(vc8.pc, 516)
         return
 
+    def test_se_VX_VY_not_equals(self):
+        command = '0x5010'
+        vc8 = virtual_chip8.Virtual_chip8()
+        vc8.registers[1] = '0x01'
+        vc8.compare_and_execute(command)
+        self.assertEqual(vc8.pc, 514)
+        return
+
     def test_sne_VX_VY(self):
         command = '0x9000'
         vc8 = virtual_chip8.Virtual_chip8()
         vc8.compare_and_execute(command)
         self.assertEqual(vc8.pc, 514)
+        return
+
+    def test_sne_VX_VY_not_equals(self):
+        command = '0x9010'
+        vc8 = virtual_chip8.Virtual_chip8()
+        vc8.registers[1] = '0x01'
+        vc8.compare_and_execute(command)
+        self.assertEqual(vc8.pc, 516)
         return
 
     def test_ld_VX_VY(self):
@@ -311,6 +342,14 @@ class Test_commands(unittest.TestCase):
         self.assertEqual(vc8.pc, 516)
         return
 
+    def test_skp_VX_not_pressed(self):
+        command = '0xe19e'
+        vc8 = virtual_chip8.Virtual_chip8()
+        vc8.registers[1] = '0x0e'
+        vc8.compare_and_execute(command)
+        self.assertEqual(vc8.pc, 514)
+        return
+
     def test_sknp_VX(self):
         command = '0xe1a1'
         vc8 = virtual_chip8.Virtual_chip8()
@@ -318,6 +357,14 @@ class Test_commands(unittest.TestCase):
         vc8.pressed_keys['0x0e'] = True
         vc8.compare_and_execute(command)
         self.assertEqual(vc8.pc, 514)
+        return
+
+    def test_sknp_VX_not_pressed(self):
+        command = '0xe1a1'
+        vc8 = virtual_chip8.Virtual_chip8()
+        vc8.registers[1] = '0x0e'
+        vc8.compare_and_execute(command)
+        self.assertEqual(vc8.pc, 516)
         return
 
     def test_ld_VX_DT(self):
@@ -404,11 +451,10 @@ class Test_commands(unittest.TestCase):
         vc8.compare_and_execute(command)
         self.assertEqual(vc8.registers[0], vc8.memory[516])
         self.assertEqual(vc8.registers[1], vc8.memory[517])
-        self.assertEqual(vc8.i, 519)
         self.assertEqual(vc8.pc, 514)
         return
 
-    def test_ld_I_VX(self):
+    def test_ld_VX_I(self):
         command = '0xf265'
         vc8 = virtual_chip8.Virtual_chip8()
         vc8.registers[0] = '0x02'
@@ -418,9 +464,21 @@ class Test_commands(unittest.TestCase):
         vc8.compare_and_execute(command)
         self.assertEqual(vc8.registers[0], vc8.memory[516])
         self.assertEqual(vc8.registers[1], vc8.memory[517])
-        self.assertEqual(vc8.i, 519)
         self.assertEqual(vc8.pc, 514)
         return
+
+    def test_rnd_VX_KK(self):
+        command = '0xc10f'
+        vc8 = virtual_chip8.Virtual_chip8()
+        vc8.compare_and_execute(command)
+        self.assertTrue(int(vc8.registers[1], 16) >= 0)
+        self.assertTrue(int(vc8.registers[1], 16) < 16)
+
+    def test_rnd_VX_KK_return_zero(self):
+        command = '0xc100'
+        vc8 = virtual_chip8.Virtual_chip8()
+        vc8.compare_and_execute(command)
+        self.assertEquals(int(vc8.registers[1], 16), 0)
 
 if __name__ == '__main__':
     unittest.main()

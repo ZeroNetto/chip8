@@ -313,7 +313,7 @@ class Virtual_chip8:
 
     def subn_VX_VY(self, command):
         # If VY >= VX, then VF = 1, else 0.
-        # Then VX is decrease from VY and the result save in VX
+        # Then VX is decrease from VY and the result save in VY
         first_reg = int(command[3], 16)
         second_reg = int(command[4], 16)
         first_num = int(self.registers[first_reg], 16)
@@ -355,9 +355,9 @@ class Virtual_chip8:
 
     def sne_VX_VY(self, command):
         # Skip the next instruction if VX != VY
-        first_num = self.registers[int(command[3], 16)]
-        second_num = self.registers[int(command[4], 16)]
-        if first_num != second_num:
+        first_reg = int(command[3], 16)
+        second_reg = int(command[4], 16)
+        if self.registers[first_reg] != self.registers[second_reg]:
             self.pc += 4
         else:
             self.pc += 2
@@ -420,6 +420,7 @@ class Virtual_chip8:
         return
 
     def se_VX_VY(self, command):
+        # Skip the next instruction, if VX == VY
         first_reg = int(command[3], 16)
         second_reg = int(command[4], 16)
         if self.registers[first_reg] == self.registers[second_reg]:
@@ -429,7 +430,8 @@ class Virtual_chip8:
         return
 
     def skp_VX(self, command):
-        # Skip the next instruction, if key, which adress saves in register VX is push.
+        # Skip the next instruction, if key,
+        # which adress saves in register VX is push.
         reg_num = self.registers[int(command[3], 16)]
         if self.pressed_keys[reg_num]:
             self.pc += 4
@@ -438,7 +440,8 @@ class Virtual_chip8:
         return
 
     def sknp_VX(self, command):
-        # Skip the next instruction, if key, which adress saves in register VX isn't push.
+        # Skip the next instruction, if key,
+        # which adress saves in register VX isn't push.
         reg_num = self.registers[int(command[3], 16)]
         if not self.pressed_keys[reg_num]:
             self.pc += 4
@@ -487,8 +490,10 @@ class Virtual_chip8:
         return
 
     def ld_F_VX(self, command):
-        # Using for output on screen the symbols of standart font size of 8x5 pixels.
-        # The command load in register I the adress of the sprite, the value which locate in VX.
+        # Using for output on screen the symbols
+        #   of standart font size of 8x5 pixels.
+        # The command load in register I the adress of the sprite,
+        #   the value which locate in VX.
         fonts_len = 5
         fonts_value = int(self.registers[int(command[3], 16)], 16)
         fonts_adress = fonts_len * fonts_value
@@ -497,7 +502,8 @@ class Virtual_chip8:
         return
 
     def ld_B_VX(self, command):
-        # Save the value of register VX in 2-10 presentation (BCD) in adress I, I+1, I+2
+        # Save the value of register VX in 2-10 presentation (BCD)
+        #   in addresses I (hundreds), I+1(tens), I+2(ones)
         num = str(int(self.registers[int(command[3], 16)], 16))
         while len(num) < 3:
             num = '0' + num
@@ -508,23 +514,23 @@ class Virtual_chip8:
         return
 
     def ld_I_VX(self, command):
-        # Save the values from V0 before VX registers in memory, starting from I adress
+        # Save the values from V0 before VX registers in memory,
+        #   starting from I adress
         x = 0
         num = int(command[3], 16)
         while x <= num:
             self.memory[self.i + x] = self.registers[x]
             x += 1
-        self.i += x
         self.pc += 2
         return
 
     def ld_VX_I(self, command):
-        # Load the values from V0 before VX registers from memory, started from I adress
+        # Load the values from V0 before VX registers from memory,
+        #   started from I adress
         x = 0
         num = int(command[3], 16)
         while x <= num:
             self.registers[x] = self.memory[self.i + x]
             x += 1
-        self.i += x
         self.pc += 2
         return

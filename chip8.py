@@ -5,7 +5,7 @@ import pyaudio
 import wave
 import threading
 import time
-from sys import platform
+import argparse
 from modules.virtual_chip8 import Virtual_chip8
 from PyQt5.QtWidgets import QApplication
 from modules.gui import Gui
@@ -21,56 +21,59 @@ data = wf.readframes(1024)
 
 
 def main():
-    if len(sys.argv) < 2:
-        print('There are no arguments for start\
-                write at least the path to the game')
-        sys.exit()
-    path = sys.argv[1]
-    debug, registers, memory, without_delay = parse_args(sys.argv)
-    start(path, debug, registers, memory, without_delay)
+    parser = create_parser()
+    parsed_args = parser.parse_args(sys.argv[1:])
+    start(parsed_args)
     return
 
 
-def parse_args(args):
-    debug = False
-    registers = False
-    memory = False
-    without_delay = False
-    for i in range(2, len(args)):
-        if args[i].lower() == 'd':
-            debug = True
-        elif args[i].lower() == 'r':
-            registers = True
-        elif args[i].lower() == 'm':
-            memory = True
-        elif args[i].lower() == 'wd':
-            without_delay = True
-        elif args[i].lower() == 'h' or args[i].lower() == '--help':
-            print('For start you should enter the path to the game\n\
-                   if you want debug then:\n\
-                   print "d" for main info\n\
-                   print "r" for registers info\n\
-                   print "m" for memory info\n\
-                   print "wd" for start without delay')
-            sys.exit()
-        else:
-            print('There are no such key: {0}'.format(args[i].lower()))
-            sys.exit()
-    return (debug, registers, memory, without_delay)
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description='Graphic version of chip8\n\
+                     The list of keys:\n\
+                     \r-d\n\
+                     \r-r\n\
+                     \r-m\n\
+                     \r-s\n\
+                     \r-ws')
+    parser.add_argument('path', type=str,
+                        help='path to file')
+    parser.add_argument('-d', '--debug',
+                        help='print command and counters info',
+                        action='store_true')
+    parser.add_argument('-r', '--registers',
+                        help='print registers info',
+                        action='store_true')
+    parser.add_argument('-m', '--memory',
+                        help='print memory info',
+                        action='store_true')
+    parser.add_argument('-s', '--speed',
+                        type=int,
+                        help='change speed of execution in Hz:\
+                              if value = 0 - without delay\
+                              default = 60Hz',
+                        default=60)
+    parser.add_argument('-ws', '--without_sound',
+                        help='off the sound in games',
+                        action='store_true')
+    return parser
 
 
-def start(path, debug, registers, memory, without_delay):
+def start(parsed_args):
     vc8 = Virtual_chip8()
-    with open(os.path.join(path), 'rb') as file:
-        load_memory(file, vc8)
+    try:
+        with open(os.path.join(parsed_args.path), 'rb') as file:
+            load_memory(file, vc8)
+    except:
+        print('Not correct path {0}'.format(parsed_args.path))
+        sys.exit()
     app = QApplication(sys.argv)
     gui = Gui(vc8)
 
     thread_timers = threading.Thread(target=tick_timers,
-                                     args=(vc8,))
+                                     args=(vc8, parsed_args))
     thread_execute = threading.Thread(target=execute,
-                                      args=(vc8, debug, registers, memory,
-                                            without_delay))
+                                      args=(vc8, parsed_args))
 
     thread_execute.start()
     thread_timers.start()
@@ -78,12 +81,12 @@ def start(path, debug, registers, memory, without_delay):
     return
 
 
-def execute(vc8, debug, registers, memory, without_delay):
+def execute(vc8, parsed_args):
     wait_to_key_command = ('f', '0a')
     prev_pc = vc8.pc
     while vc8.pc < vc8.memory_limit and vc8.execution:
         command = get_command(vc8)
-        tracing(vc8, debug, registers, memory, command)
+        tracing(vc8, command, parsed_args)
         have_pressed_key = False
         while ((command[2], command[4:]) == wait_to_key_command and
                 not have_pressed_key):
@@ -100,8 +103,8 @@ def execute(vc8, debug, registers, memory, without_delay):
             sys.exit()
         else:
             prev_pc = vc8.pc
-        if not without_delay:
-            time.sleep(0.01 / vc8.speed)
+        if parsed_args.speed > 0:
+            time.sleep(1 / parsed_args.speed)
     sys.exit()
     return
 
@@ -126,22 +129,23 @@ def get_command(vc8):
     return command
 
 
-def tracing(vc8, debug, registers, memory, command):
-    if debug:
+def tracing(vc8, command, parsed_args):
+    if parsed_args.debug:
         print("PC: {0}, I: {1}, delay: {2}, sound: {3} command: {4}"
               .format(vc8.pc, vc8.i, vc8.delay_timer, vc8.sound_timer,
                       command))
-    if registers:
+    if parsed_args.registers:
         print(vc8.registers)
-    if memory:
+    if parsed_args.memory:
         print(vc8.memory)
     return
 
 
-def tick_timers(vc8):
+def tick_timers(vc8, parsed_args):
     while vc8.execution:
         if vc8.sound_timer > 0:
-            stream.write(data)
+            if not parsed_args.without_sound:
+                stream.write(data)
             vc8.sound_timer -= 1
         if vc8.delay_timer > 0:
             vc8.delay_timer -= 1

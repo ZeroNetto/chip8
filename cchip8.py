@@ -5,6 +5,7 @@ import pyaudio
 import wave
 import time
 import threading
+import argparse
 from sys import platform
 from pynput import keyboard
 from modules.virtual_chip8 import Virtual_chip8
@@ -40,65 +41,70 @@ def on_release(key):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print('There are no arguments for start\
-                write at least the path to the game')
-        sys.exit()
-    path = sys.argv[1]
-    debug, registers, memory, without_delay = parse_args(sys.argv)
-    start(path, debug, registers, memory, without_delay)
+    parser = create_parser()
+    parsed_args = parser.parse_args(sys.argv[1:])
+    start(parsed_args)
     return
 
 
-def parse_args(args):
-    debug = False
-    registers = False
-    memory = False
-    without_delay = False
-    for i in range(2, len(args)):
-        if args[i].lower() == 'd':
-            debug = True
-        elif args[i].lower() == 'r':
-            registers = True
-        elif args[i].lower() == 'm':
-            memory = True
-        elif args[i].lower() == 'wd':
-            without_delay = True
-        elif args[i].lower() == 'h' or args[i].lower() == '--h':
-            print('For start you should enter the path to the of game\n\
-                   if you want debug then:\n\
-                   print "d" for main info\n\
-                   print "r" for registers info\n\
-                   print "m" for memory info\n\
-                   print "wd" for start without delay')
-            sys.exit()
-        else:
-            print('There are no such key: {0}'.format(args[i].lower()))
-            sys.exit()
-    return (debug, registers, memory, without_delay)
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description='Console version of chip8\n\
+                     The list of keys:\n\
+                     \r-d\n\
+                     \r-r\n\
+                     \r-m\n\
+                     \r-s\n\
+                     \r-ws')
+    parser.add_argument('path', type=str,
+                        help='path to file')
+    parser.add_argument('-d', '--debug',
+                        help='print command and counters info',
+                        action='store_true')
+    parser.add_argument('-r', '--registers',
+                        help='print registers info',
+                        action='store_true')
+    parser.add_argument('-m', '--memory',
+                        help='print memory info',
+                        action='store_true')
+    parser.add_argument('-s', '--speed',
+                        type=int,
+                        help='change speed of execution in Hz:\
+                              if value = 0 - without delay\
+                              default = 60Hz',
+                        default=60)
+    parser.add_argument('-ws', '--without_sound',
+                        help='off the sound in games',
+                        action='store_true')
+    return parser
 
 
-def start(path, debug, registers, memory, without_delay):
-    with open(os.path.join(path), 'rb') as file:
-        load_memory(file)
+def start(parsed_args):
+    try:
+        with open(os.path.join(parsed_args.path), 'rb') as file:
+            load_memory(file)
+    except:
+        print('Not correct path {0}'.format(parsed_args.path))
+        sys.exit()
 
     thread_execute = threading.Thread(target=execute,
-                                      args=(debug, registers, memory,
-                                            without_delay))
-    thread_timers = threading.Thread(target=tick_timers)
+                                      args=(parsed_args,))
+    thread_timers = threading.Thread(target=tick_timers,
+                                     args=(parsed_args,))
     listener = keyboard.Listener(on_press=on_press,
                                  on_release=on_release)
 
     listener.start()
     thread_timers.start()
     thread_execute.start()
-    if not debug and not memory and not registers:
+    if (not parsed_args.debug and not parsed_args.memory and
+            not parsed_args.registers):
         thread_print = threading.Thread(target=print_field)
         thread_print.start()
     return
 
 
-def execute(debug, registers, memory, without_delay):
+def execute(parsed_args):
     wait_to_key_command = ('f', '0a')
     prev_pc = vc8.pc
     while vc8.pc < vc8.memory_limit and vc8.execution:
@@ -111,7 +117,7 @@ def execute(debug, registers, memory, without_delay):
                 if vc8.pressed_keys[key]:
                     have_pressed_key = True
                     break
-        tracing(debug, registers, memory, command)
+        tracing(parsed_args, command)
         vc8.compare_and_execute(command)
         if vc8.pc == prev_pc:
             print('GAME OVER!')
@@ -120,8 +126,8 @@ def execute(debug, registers, memory, without_delay):
             sys.exit()
         else:
             prev_pc = vc8.pc
-        if not without_delay:
-            time.sleep(0.01 / vc8.speed)
+        if parsed_args.speed > 0:
+            time.sleep(0.1 / parsed_args.speed)
     sys.exit()
     return
 
@@ -146,28 +152,36 @@ def get_command():
     return command
 
 
-def tracing(debug, registers, memory, command):
-    if debug:
+def tracing(parsed_args, command):
+    was_debug = False
+    if parsed_args.debug:
         print("PC: {0}, I: {1}, delay: {2}, sound: {3} command: {4}"
               .format(vc8.pc, vc8.i, vc8.delay_timer, vc8.sound_timer,
                       command))
-    if registers:
+        was_debug = True
+    if parsed_args.registers:
         print(vc8.registers)
-    if memory:
+        was_debug = True
+    if parsed_args.memory:
         print(vc8.memory)
-    if debug or memory or registers:
+        was_debug = True
+    if was_debug:
         print_debug_field()
     return
 
 
-def tick_timers():
+def tick_timers(parsed_args):
     while vc8.execution:
         if vc8.sound_timer > 0:
-            stream.write(data)
+            if not parsed_args.without_sound:
+                stream.write(data)
             vc8.sound_timer -= 1
         if vc8.delay_timer > 0:
             vc8.delay_timer -= 1
         time.sleep(1 / vc8.speed)
+    stream.stop_stream()
+    stream.close()
+    pa.terminate()
     sys.exit()
     return
 
