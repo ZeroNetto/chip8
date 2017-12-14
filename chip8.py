@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication
 from modules.gui import Gui
 
 
-wf = wave.open(os.path.join('sound\\beep.wav'), 'rb')
+wf = wave.open(os.path.join('.\\sound\\beep.wav'), 'rb')
 pa = pyaudio.PyAudio()
 stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
                  channels=wf.getnchannels(),

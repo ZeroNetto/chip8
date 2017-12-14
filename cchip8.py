@@ -10,7 +10,7 @@ from sys import platform
 from pynput import keyboard
 from modules.virtual_chip8 import Virtual_chip8
 
-wf = wave.open(os.path.join('sound\\beep.wav'), 'rb')
+wf = wave.open(os.path.join('.\\sound\\beep.wav'), 'rb')
 pa = pyaudio.PyAudio()
 stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
                  channels=wf.getnchannels(),
