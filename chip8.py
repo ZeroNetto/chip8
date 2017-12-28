@@ -11,15 +11,6 @@ from PyQt5.QtWidgets import QApplication
 from modules.gui import Gui
 
 
-wf = wave.open(os.path.join('.\\sound\\beep.wav'), 'rb')
-pa = pyaudio.PyAudio()
-stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
-                 channels=wf.getnchannels(),
-                 rate=wf.getframerate(),
-                 output=True)
-data = wf.readframes(1024)
-
-
 def main():
     parser = create_parser()
     parsed_args = parser.parse_args(sys.argv[1:])
@@ -51,8 +42,8 @@ def create_parser():
                         type=int,
                         help='change speed of execution in Hz:\
                               if value = 0 - without delay\
-                              default = 60Hz',
-                        default=60)
+                              default = 1000Hz',
+                        default=1000)
     parser.add_argument('-ws', '--without_sound',
                         help='off the sound in games',
                         action='store_true')
@@ -64,19 +55,24 @@ def start(parsed_args):
     try:
         with open(os.path.join(parsed_args.path), 'rb') as file:
             load_memory(file, vc8)
-    except:
-        print('Not correct path {0}'.format(parsed_args.path))
-        sys.exit()
+    except IOError:
+        sys.stderr.write('Not correct path or file is not supported {0}'
+                         .format(parsed_args.path))
+        sys.exit(IOError)
     app = QApplication(sys.argv)
     gui = Gui(vc8)
 
-    thread_timers = threading.Thread(target=tick_timers,
-                                     args=(vc8, parsed_args))
+    thread_delay_timer = threading.Thread(target=tick_delay_timer,
+                                          args=(vc8,))
+    thread_sound_timer = threading.Thread(target=tick_sound_timer,
+                                          args=(vc8,))
     thread_execute = threading.Thread(target=execute,
                                       args=(vc8, parsed_args))
 
     thread_execute.start()
-    thread_timers.start()
+    thread_delay_timer.start()
+    if not parsed_args.without_sound:
+        thread_sound_timer.start()
     sys.exit(app.exec_())
     return
 
@@ -141,19 +137,37 @@ def tracing(vc8, command, parsed_args):
     return
 
 
-def tick_timers(vc8, parsed_args):
+def tick_delay_timer(vc8):
     while vc8.execution:
-        if vc8.sound_timer > 0:
-            if not parsed_args.without_sound:
-                stream.write(data)
-            vc8.sound_timer -= 1
         if vc8.delay_timer > 0:
             vc8.delay_timer -= 1
         time.sleep(1 / vc8.speed)
-    stream.stop_stream()
-    stream.close()
-    pa.terminate()
     sys.exit()
+    return
+
+
+def tick_sound_timer(vc8):
+    try:
+        wf = wave.open(os.path.join('.\\sound\\beep.wav'), 'rb')
+        pa = pyaudio.PyAudio()
+        stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
+                         channels=wf.getnchannels(),
+                         rate=wf.getframerate(),
+                         output=True)
+        data = wf.readframes(1024)
+        while vc8.execution:
+            if vc8.sound_timer > 0:
+                stream.write(data)
+                vc8.sound_timer -= 1
+            time.sleep(1 / vc8.speed)
+        stream.stop_stream()
+        stream.close()
+        pa.terminate()
+        sys.exit()
+    except IOError:
+        sys.stderr.write('Not correct path or file is not supported {0}'
+                         .format(parsed_args.path))
+        sys.exit(IOError)
     return
 
 

@@ -514,7 +514,7 @@ class Virtual_chip8:
         return
 
     def ld_I_VX(self, command):
-        # Save the values from V0 before VX registers in memory,
+        # Save the values from V0 to VX registers in memory,
         #   starting from I adress
         x = 0
         num = int(command[3], 16)
@@ -525,8 +525,8 @@ class Virtual_chip8:
         return
 
     def ld_VX_I(self, command):
-        # Load the values from V0 before VX registers from memory,
-        #   started from I adress
+        # Load the values from V0 to VX registers from memory,
+        #   starting from I adress
         x = 0
         num = int(command[3], 16)
         while x <= num:

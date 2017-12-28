@@ -10,13 +10,6 @@ from sys import platform
 from pynput import keyboard
 from modules.virtual_chip8 import Virtual_chip8
 
-wf = wave.open(os.path.join('.\\sound\\beep.wav'), 'rb')
-pa = pyaudio.PyAudio()
-stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
-                 channels=wf.getnchannels(),
-                 rate=wf.getframerate(),
-                 output=True)
-data = wf.readframes(1024)
 vc8 = Virtual_chip8()
 
 
@@ -35,7 +28,7 @@ def on_release(key):
         char = key.char
         if char in vc8.keys:
             vc8.pressed_keys[vc8.keys[char]] = False
-    except:
+    except AttributeError or ValueError:
         return
     return
 
@@ -71,8 +64,8 @@ def create_parser():
                         type=int,
                         help='change speed of execution in Hz:\
                               if value = 0 - without delay\
-                              default = 60Hz',
-                        default=60)
+                              default = 1000Hz',
+                        default=1000)
     parser.add_argument('-ws', '--without_sound',
                         help='off the sound in games',
                         action='store_true')
@@ -83,20 +76,23 @@ def start(parsed_args):
     try:
         with open(os.path.join(parsed_args.path), 'rb') as file:
             load_memory(file)
-    except:
-        print('Not correct path {0}'.format(parsed_args.path))
-        sys.exit()
+    except IOError:
+        sys.stderr.write('Not correct path or file is not supported {0}'
+                         .format(parsed_args.path))
+        sys.exit(IOError)
 
     thread_execute = threading.Thread(target=execute,
                                       args=(parsed_args,))
-    thread_timers = threading.Thread(target=tick_timers,
-                                     args=(parsed_args,))
+    thread_delay_timer = threading.Thread(target=tick_delay_timer)
+    thread_sound_timer = threading.Thread(target=tick_sound_timer)
     listener = keyboard.Listener(on_press=on_press,
                                  on_release=on_release)
 
     listener.start()
-    thread_timers.start()
     thread_execute.start()
+    thread_delay_timer.start()
+    if not parsed_args.without_sound:
+        thread_sound_timer.start()
     if (not parsed_args.debug and not parsed_args.memory and
             not parsed_args.registers):
         thread_print = threading.Thread(target=print_field)
@@ -170,19 +166,37 @@ def tracing(parsed_args, command):
     return
 
 
-def tick_timers(parsed_args):
+def tick_delay_timer():
     while vc8.execution:
-        if vc8.sound_timer > 0:
-            if not parsed_args.without_sound:
-                stream.write(data)
-            vc8.sound_timer -= 1
         if vc8.delay_timer > 0:
             vc8.delay_timer -= 1
         time.sleep(1 / vc8.speed)
-    stream.stop_stream()
-    stream.close()
-    pa.terminate()
     sys.exit()
+    return
+
+
+def tick_sound_timer():
+    try:
+        wf = wave.open(os.path.join('.\\sound\\beep.wav'), 'rb')
+        pa = pyaudio.PyAudio()
+        stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
+                         channels=wf.getnchannels(),
+                         rate=wf.getframerate(),
+                         output=True)
+        data = wf.readframes(1024)
+        while vc8.execution:
+            if vc8.sound_timer > 0:
+                stream.write(data)
+                vc8.sound_timer -= 1
+            time.sleep(1 / vc8.speed)
+        stream.stop_stream()
+        stream.close()
+        pa.terminate()
+        sys.exit()
+    except IOError:
+        sys.stderr.write('Not correct path or file is not supported {0}'
+                         .format(parsed_args.path))
+        sys.exit(IOError)
     return
 
 

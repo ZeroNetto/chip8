@@ -55,7 +55,7 @@ class Gui(QWidget):
             char = chr(e.key()).lower()
             if char in self.vc8.keys:
                 self.vc8.pressed_keys[self.vc8.keys[char]] = True
-        except:
+        except ValueError:
             return
         return
 
@@ -64,6 +64,10 @@ class Gui(QWidget):
             char = chr(e.key()).lower()
             if char in self.vc8.keys:
                 self.vc8.pressed_keys[self.vc8.keys[char]] = False
-        except:
+        except ValueError:
             return
+        return
+
+    def closeEvent(self, e):
+        self.vc8.execution = False
         return
