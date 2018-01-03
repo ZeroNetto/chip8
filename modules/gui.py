@@ -50,6 +50,9 @@ class Gui(QWidget):
                     cell.setStyleSheet(sheet)
         return
 
+# ValueErrors here for causes when a key, that was press,
+#     is not supported by listener
+
     def keyPressEvent(self, e):
         try:
             char = chr(e.key()).lower()

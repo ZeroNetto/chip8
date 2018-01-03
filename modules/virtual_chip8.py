@@ -139,29 +139,24 @@ class Virtual_chip8:
             self.first_num_commands[command[:3]](command)
         else:
             print("There are no such command {0}!".format(command))
-        return
 
     def clean_screen(self, command):
         # clean screen
         self._init_field_()
         self.pc += 2
-        return
 
     def ret(self, command):
         # return
         self.pc = self.stack.pop()
-        return
 
     def jp_NNN(self, command):
         # jump
         self.pc = int(command[3:], 16)
-        return
 
     def call_NNN(self, command):
         # call programm from adress
         self.stack.append(self.pc + 2)
         self.pc = int(command[3:], 16)
-        return
 
     def se_VX_KK(self, command):
         # skip instruction if VX==KK
@@ -171,7 +166,6 @@ class Virtual_chip8:
             self.pc += 4
         else:
             self.pc += 2
-        return
 
     def sne_VX_KK(self, command):
         # skip instruction if VX!=KK
@@ -181,13 +175,11 @@ class Virtual_chip8:
             self.pc += 4
         else:
             self.pc += 2
-        return
 
     def ld_VX_KK(self, command):
         # load the number KK to register VX
         self.registers[int(command[3], 16)] = '0x' + (command[4:])
         self.pc += 2
-        return
 
     def add_VX_KK(self, command):
         # load in VX register the sum of VX and KK
@@ -202,7 +194,6 @@ class Virtual_chip8:
             hex_res = '0x0' + hex_res[len(hex_res) - 1]
         self.registers[reg] = hex_res
         self.pc += 2
-        return
 
     def ld_VX_VY(self, command):
         # load value from VY register to VX register
@@ -210,7 +201,6 @@ class Virtual_chip8:
         second_reg = int(command[4], 16)
         self.registers[first_reg] = self.registers[second_reg]
         self.pc += 2
-        return
 
     def or_VX_VY(self, command):
         # boolean "or" between VX and VY
@@ -224,7 +214,6 @@ class Virtual_chip8:
             hex_res = '0x0' + hex_res[len(hex_res) - 1]
         self.registers[first_reg] = hex_res
         self.pc += 2
-        return
 
     def and_VX_VY(self, command):
         # boolean "and" between VX and VY
@@ -238,7 +227,6 @@ class Virtual_chip8:
             hex_res = '0x0' + hex_res[len(hex_res) - 1]
         self.registers[first_reg] = hex_res
         self.pc += 2
-        return
 
     def xor_VX_VY(self, command):
         # boolean "not or" between VX and VY
@@ -252,7 +240,6 @@ class Virtual_chip8:
             hex_res = '0x0' + hex_res[len(hex_res) - 1]
         self.registers[first_reg] = hex_res
         self.pc += 2
-        return
 
     def add_VX_VY(self, command):
         # VX summing with VY. If result > 255, then VF = 1, else 0.
@@ -272,7 +259,6 @@ class Virtual_chip8:
             hex_res = '0x0' + hex_res[len(hex_res) - 1]
         self.registers[first_reg] = hex_res
         self.pc += 2
-        return
 
     def sub_VX_VY(self, command):
         # VY decrease from VX and the result save in VX.
@@ -292,7 +278,6 @@ class Virtual_chip8:
             hex_res = '0x0' + hex_res[len(hex_res) - 1]
         self.registers[first_reg] = hex_res
         self.pc += 2
-        return
 
     def shr_VX(self, command):
         # The operation of shift to right on 1 bit. Shifted register VX.
@@ -309,7 +294,6 @@ class Virtual_chip8:
             hex_res = '0x0' + hex_res[len(hex_res) - 1]
         self.registers[reg] = hex_res
         self.pc += 2
-        return
 
     def subn_VX_VY(self, command):
         # If VY >= VX, then VF = 1, else 0.
@@ -329,7 +313,6 @@ class Virtual_chip8:
             hex_res = '0x0' + hex_res[len(hex_res) - 1]
         self.registers[first_reg] = hex_res
         self.pc += 2
-        return
 
     def shl_VX(self, command):
         # The operation of shift to left on 1 bit. Shifed register VX.
@@ -351,7 +334,6 @@ class Virtual_chip8:
             hex_res = '0x0' + hex_res[len(hex_res) - 1]
         self.registers[reg] = hex_res
         self.pc += 2
-        return
 
     def sne_VX_VY(self, command):
         # Skip the next instruction if VX != VY
@@ -361,18 +343,15 @@ class Virtual_chip8:
             self.pc += 4
         else:
             self.pc += 2
-        return
 
     def ld_I_NNN(self, command):
         # The value of register I set in NNN.
         self.i = int(command[3:], 16)
         self.pc += 2
-        return
 
     def jp_V0_NNN(self, command):
         # Move to NNN + V0 adress
         self.pc = int(command[3:], 16) + int(self.registers[0], 16)
-        return
 
     def rnd_VX_KK(self, command):
         # Random value (from 0 to 255) & KK
@@ -384,7 +363,6 @@ class Virtual_chip8:
             hex_res = '0x0' + hex_res[len(hex_res) - 1]
         self.registers[reg] = hex_res
         self.pc += 2
-        return
 
     def drw_VX_VY_N(self, command):
         # Draw on the screen the sprite.
@@ -417,7 +395,6 @@ class Virtual_chip8:
         if not px_was_clear:
             self.registers[15] = '0x00'
         self.pc += 2
-        return
 
     def se_VX_VY(self, command):
         # Skip the next instruction, if VX == VY
@@ -427,7 +404,6 @@ class Virtual_chip8:
             self.pc += 4
         else:
             self.pc += 2
-        return
 
     def skp_VX(self, command):
         # Skip the next instruction, if key,
@@ -437,7 +413,6 @@ class Virtual_chip8:
             self.pc += 4
         else:
             self.pc += 2
-        return
 
     def sknp_VX(self, command):
         # Skip the next instruction, if key,
@@ -447,7 +422,6 @@ class Virtual_chip8:
             self.pc += 4
         else:
             self.pc += 2
-        return
 
     def ld_VX_DT(self, command):
         # Register VX takes the value of delay timer.
@@ -457,7 +431,6 @@ class Virtual_chip8:
             temp = '0x0' + temp[len(temp) - 1]
         self.registers[register] = temp
         self.pc += 2
-        return
 
     def ld_VX_K(self, command):
         # Waiting for push a key. When key will be push, save it number in
@@ -468,26 +441,22 @@ class Virtual_chip8:
                     self.registers[reg] = key
                     self.pc += 2
                     return
-        return
 
     def ld_DT_VX(self, command):
         # Set the value of delay timer as the value of register VX
         self.delay_timer = int(self.registers[int(command[3], 16)], 16)
         self.pc += 2
-        return
 
     def ld_ST_VX(self, command):
         # Set the value of sound timer as the value of register VX
         self.sound_timer = int(self.registers[int(command[3], 16)], 16)
         self.pc += 2
-        return
 
     def add_I_VX(self, command):
         # Set the value of register I as the sum of values I and VX registers
         command_register_num = int(self.registers[int(command[3], 16)], 16)
         self.i += command_register_num
         self.pc += 2
-        return
 
     def ld_F_VX(self, command):
         # Using for output on screen the symbols
@@ -499,7 +468,6 @@ class Virtual_chip8:
         fonts_adress = fonts_len * fonts_value
         self.i = fonts_adress
         self.pc += 2
-        return
 
     def ld_B_VX(self, command):
         # Save the value of register VX in 2-10 presentation (BCD)
@@ -511,7 +479,6 @@ class Virtual_chip8:
             temp = '0x0' + num[digit_id]
             self.memory[self.i + digit_id] = temp
         self.pc += 2
-        return
 
     def ld_I_VX(self, command):
         # Save the values from V0 to VX registers in memory,
@@ -522,7 +489,6 @@ class Virtual_chip8:
             self.memory[self.i + x] = self.registers[x]
             x += 1
         self.pc += 2
-        return
 
     def ld_VX_I(self, command):
         # Load the values from V0 to VX registers from memory,
@@ -533,4 +499,3 @@ class Virtual_chip8:
             self.registers[x] = self.memory[self.i + x]
             x += 1
         self.pc += 2
-        return

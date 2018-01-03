@@ -12,15 +12,17 @@ from modules.virtual_chip8 import Virtual_chip8
 
 vc8 = Virtual_chip8()
 
+# AttributeErrors here for causes when a key, that was press,
+#     is not supported by listener
+
 
 def on_press(key):
     try:
         char = key.char
         if char in vc8.keys:
             vc8.pressed_keys[vc8.keys[char]] = True
-    except:
+    except AttributeError:
         return
-    return
 
 
 def on_release(key):
@@ -28,16 +30,14 @@ def on_release(key):
         char = key.char
         if char in vc8.keys:
             vc8.pressed_keys[vc8.keys[char]] = False
-    except AttributeError or ValueError:
+    except AttributeError:
         return
-    return
 
 
 def main():
     parser = create_parser()
     parsed_args = parser.parse_args(sys.argv[1:])
     start(parsed_args)
-    return
 
 
 def create_parser():
@@ -77,14 +77,17 @@ def start(parsed_args):
         with open(os.path.join(parsed_args.path), 'rb') as file:
             load_memory(file)
     except IOError:
-        sys.stderr.write('Not correct path or file is not supported {0}'
+        sys.stderr.write('Not correct path or file is not supported {0}\n\
+                          \rPlease check the correctness of the path\n\
+                             \ryou entered, the presence of the file\n\
+                             \rin the destination folder and the type\n\
+                             \rof this file\n'
                          .format(parsed_args.path))
-        sys.exit(IOError)
+        sys.exit(1)
 
     thread_execute = threading.Thread(target=execute,
                                       args=(parsed_args,))
     thread_delay_timer = threading.Thread(target=tick_delay_timer)
-    thread_sound_timer = threading.Thread(target=tick_sound_timer)
     listener = keyboard.Listener(on_press=on_press,
                                  on_release=on_release)
 
@@ -92,12 +95,12 @@ def start(parsed_args):
     thread_execute.start()
     thread_delay_timer.start()
     if not parsed_args.without_sound:
+        thread_sound_timer = threading.Thread(target=tick_sound_timer)
         thread_sound_timer.start()
     if (not parsed_args.debug and not parsed_args.memory and
             not parsed_args.registers):
         thread_print = threading.Thread(target=print_field)
         thread_print.start()
-    return
 
 
 def execute(parsed_args):
@@ -124,8 +127,6 @@ def execute(parsed_args):
             prev_pc = vc8.pc
         if parsed_args.speed > 0:
             time.sleep(0.1 / parsed_args.speed)
-    sys.exit()
-    return
 
 
 def load_memory(file):
@@ -138,7 +139,6 @@ def load_memory(file):
                 temp_num = '0x0' + temp_num[2]
             vc8.memory[counter + vc8.shift] = temp_num
             counter += 1
-    return
 
 
 def get_command():
@@ -163,7 +163,6 @@ def tracing(parsed_args, command):
         was_debug = True
     if was_debug:
         print_debug_field()
-    return
 
 
 def tick_delay_timer():
@@ -172,12 +171,12 @@ def tick_delay_timer():
             vc8.delay_timer -= 1
         time.sleep(1 / vc8.speed)
     sys.exit()
-    return
 
 
 def tick_sound_timer():
+    path = '.\\sound\\beep.wav'
     try:
-        wf = wave.open(os.path.join('.\\sound\\beep.wav'), 'rb')
+        wf = wave.open(os.path.join(path), 'rb')
         pa = pyaudio.PyAudio()
         stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
                          channels=wf.getnchannels(),
@@ -194,30 +193,31 @@ def tick_sound_timer():
         pa.terminate()
         sys.exit()
     except IOError:
-        sys.stderr.write('Not correct path or file is not supported {0}'
-                         .format(parsed_args.path))
-        sys.exit(IOError)
-    return
+        sys.stderr.write('Not correct path or file is not supported {0}\n\
+                          \rPlease check the correctness of the path\n\
+                             \ryou entered, the presence of the file\n\
+                             \rin the destination folder and the type\n\
+                             \rof this file\n'
+                         .format(path))
+        sys.exit(1)
 
 
 def print_field():
     while vc8.execution:
-        try:
+        if sys.platform == 'win32':
             os.system('cls')
-        except:
+        else:
             os.system('clear')
         for y in range(vc8.height):
             print(get_representation_of_line(y))
         time.sleep(2 / vc8.speed)
     sys.exit()
-    return
 
 
 def print_debug_field():
     print()
     for y in range(vc8.height):
         print(get_representation_of_line(y))
-    return
 
 
 def get_representation_of_line(y):

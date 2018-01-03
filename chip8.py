@@ -15,7 +15,6 @@ def main():
     parser = create_parser()
     parsed_args = parser.parse_args(sys.argv[1:])
     start(parsed_args)
-    return
 
 
 def create_parser():
@@ -56,15 +55,17 @@ def start(parsed_args):
         with open(os.path.join(parsed_args.path), 'rb') as file:
             load_memory(file, vc8)
     except IOError:
-        sys.stderr.write('Not correct path or file is not supported {0}'
+        sys.stderr.write('Not correct path or file is not supported {0}\n\
+                          \rPlease check the correctness of the path\n\
+                             \ryou entered, the presence of the file\n\
+                             \rin the destination folder and the type\n\
+                             \rof this file\n'
                          .format(parsed_args.path))
-        sys.exit(IOError)
+        sys.exit(1)
     app = QApplication(sys.argv)
     gui = Gui(vc8)
 
     thread_delay_timer = threading.Thread(target=tick_delay_timer,
-                                          args=(vc8,))
-    thread_sound_timer = threading.Thread(target=tick_sound_timer,
                                           args=(vc8,))
     thread_execute = threading.Thread(target=execute,
                                       args=(vc8, parsed_args))
@@ -72,9 +73,10 @@ def start(parsed_args):
     thread_execute.start()
     thread_delay_timer.start()
     if not parsed_args.without_sound:
+        thread_sound_timer = threading.Thread(target=tick_sound_timer,
+                                              args=(vc8,))
         thread_sound_timer.start()
     sys.exit(app.exec_())
-    return
 
 
 def execute(vc8, parsed_args):
@@ -101,8 +103,6 @@ def execute(vc8, parsed_args):
             prev_pc = vc8.pc
         if parsed_args.speed > 0:
             time.sleep(1 / parsed_args.speed)
-    sys.exit()
-    return
 
 
 def load_memory(file, vc8):
@@ -115,7 +115,6 @@ def load_memory(file, vc8):
                 temp_num = '0x0' + temp_num[2]
             vc8.memory[counter + vc8.shift] = temp_num
             counter += 1
-    return
 
 
 def get_command(vc8):
@@ -134,7 +133,6 @@ def tracing(vc8, command, parsed_args):
         print(vc8.registers)
     if parsed_args.memory:
         print(vc8.memory)
-    return
 
 
 def tick_delay_timer(vc8):
@@ -143,12 +141,12 @@ def tick_delay_timer(vc8):
             vc8.delay_timer -= 1
         time.sleep(1 / vc8.speed)
     sys.exit()
-    return
 
 
 def tick_sound_timer(vc8):
+    path = '.\\sound\\beep.wav'
     try:
-        wf = wave.open(os.path.join('.\\sound\\beep.wav'), 'rb')
+        wf = wave.open(os.path.join(path), 'rb')
         pa = pyaudio.PyAudio()
         stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
                          channels=wf.getnchannels(),
@@ -165,10 +163,13 @@ def tick_sound_timer(vc8):
         pa.terminate()
         sys.exit()
     except IOError:
-        sys.stderr.write('Not correct path or file is not supported {0}'
-                         .format(parsed_args.path))
-        sys.exit(IOError)
-    return
+        sys.stderr.write('Not correct path or file is not supported {0}\n\
+                          \rPlease check the correctness of the path\n\
+                             \ryou entered, the presence of the file\n\
+                             \rin the destination folder and the type\n\
+                             \rof this file\n'
+                         .format(path))
+        sys.exit(1)
 
 
 if __name__ == "__main__":
